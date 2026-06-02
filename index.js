@@ -10,7 +10,7 @@ app.use(express.json());
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 app.get('/', (req, res) => {
-    res.send('Hello World!');
+    res.send('I am CareerLib backend!');
 });
 
 const uri = process.env.MONGODB_URI;
@@ -34,6 +34,23 @@ async function run() {
         const companyCollection = database.collection("companies");
 
         // API endpoints start here
+        // GET Jobs API
+        app.get('/api/jobs', async (req, res) => {
+            try {
+                const query = {};
+                if (req.query.companyId) {
+                    query.companyId = req.query.companyId;
+                }
+                if (req.query.status) {
+                    query.status = req.query.status;
+                }
+                const cursor = jobCollection.find(query);
+                const result = await cursor.toArray();
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ message: "Error fetching jobs", error });
+            }
+        });
  
 
         // Send a ping to confirm a successful connection
@@ -43,7 +60,7 @@ async function run() {
     } catch (error) {
         console.dir(error);
     } 
-    // finally { await client.close(); } <-- এই ব্লকটি মুছে দেওয়া হয়েছে
+    // finally { await client.close(); }
 }
 
 run().catch(console.dir);
