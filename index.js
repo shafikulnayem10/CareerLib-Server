@@ -51,6 +51,16 @@ async function run() {
                 res.status(500).send({ message: "Error fetching jobs", error });
             }
         });
+        // POST Job API
+        app.post('/api/jobs', async (req, res) => {
+            try {
+                const job = req.body;
+                const result = await jobCollection.insertOne(job);
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ message: "Error inserting job", error });
+            }
+        });
  
 
         // Send a ping to confirm a successful connection
