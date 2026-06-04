@@ -27,13 +27,22 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
        
-        await client.connect();
+          await client.connect();
+
 
         const database = client.db(process.env.AUTH_DB_NAME);
         const jobCollection = database.collection("jobs");
         const companyCollection = database.collection("companies");
+        const usersCollection = database.collection("users");
 
         // API endpoints start here
+        
+        app.get('/api/users', async (req, res) => {
+            
+            const cursor = usersCollection.find().skip(6);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
         // GET Jobs API
         app.get('/api/jobs', async (req, res) => {
             try {
