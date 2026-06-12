@@ -146,10 +146,17 @@ async function run() {
             res.send(result);
         })
         //application related apis
-             app.get('/api/applications', async (req, res) => {
+           app.get('/api/applications', verifyToken, verifySeeker, async (req, res) => {
             const query = {};
             if (req.query.applicantId) {
                 query.applicantId = req.query.applicantId;
+
+                // check whether asking for user information or someone else
+                console.log(req.user, req.query.applicantId)
+                if (req.user._id.toString() !== req.query.applicantId) {
+                    return res.status(403).send({ message: 'forbidden access' })
+                }
+
             }
             if (req.query.jobId) {
                 query.jobId = req.query.jobId;
@@ -175,7 +182,7 @@ async function run() {
         // })
 
         // inefficient way to join/aggregate collection
-        app.get('/api/companies', async (req, res) => {
+        app.get('/api/companies', verifyToken, verifyAdmin, async (req, res) => {
             const cursor = companyCollection.find();
             const companies = await cursor.toArray();
 
