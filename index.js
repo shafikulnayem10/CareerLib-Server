@@ -9,6 +9,11 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+const logger = (req, res, next) => {
+    console.log('logger middleware logged', req.params);
+    next();
+}
+
 
 app.get('/', (req, res) => {
     res.send('I am CareerLib backend!');
@@ -39,6 +44,67 @@ async function run() {
         const applicationsCollection = database.collection("applications");
         const planCollection = database.collection('plans');
         const subscriptionCollection = database.collection('subscriptions');
+        const sessionCollection = database.collection('session');
+     // verification related
+        const verifyToken = async (req, res, next) => {
+
+            const authHeader = req.headers?.authorization;
+            if (!authHeader) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+
+            const token = authHeader.split(' ')[1]
+
+            if (!token) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+
+            const query = { token: token }
+            const session = await sessionCollection.findOne(query);
+
+              if (!session) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+
+            const userId = session.userId;
+
+
+            const userQuery = {
+                _id: userId
+            }
+
+            const user = await usersCollection.findOne(userQuery);
+              if (!user) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            // set data in the req object
+            req.user = user;
+            next();
+        }
+
+        // must be used after verifyToken middleware
+        const verifySeeker = async (req, res, next) => {
+            if (req.user?.role !== 'seeker') {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
+
+        // must be used after verifyToken middleware
+        const verifyRecruiter = async (req, res, next) => {
+            if (req.user?.role !== 'recruiter') {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
+
+        // must be used after verifyToken middleware
+        const verifyAdmin = async (req, res, next) => {
+            if (req.user.role !== 'admin') {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
 
 
         app.get('/api/users', async (req, res) => {
@@ -189,7 +255,8 @@ async function run() {
             res.send(result);
         })
         
-          app.patch('/api/companies/:id', async (req, res) => {
+       
+app.patch('/api/companies/:id', logger, verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const updatedCompany = req.body;
             const filter = { _id: new ObjectId(id) }
