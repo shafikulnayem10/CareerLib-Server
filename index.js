@@ -107,25 +107,60 @@ async function run() {
         }
 
 
-        app.get('/api/users', async (req, res) => {
+        // app.get('/api/users', async (req, res) => {
             
-            const cursor = usersCollection.find().skip(6);
-            const result = await cursor.toArray();
-            res.send(result);
-        })
-
+        //     const cursor = usersCollection.find().skip(6);
+        //     const result = await cursor.toArray();
+        //     res.send(result);
+        // })
+     //jobs related apis
         app.get('/api/jobs', async (req, res) => {
-            const query = {};
-            if (req.query.companyId) {
-                query.companyId = req.query.companyId;
-            }
-            if (req.query.status) {
-                query.status = req.query.status;
-            }
-            const cursor = jobCollection.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        })
+    console.log('server side q', req.query)
+    const query = {};
+    // job filter related query
+    if (req.query.search) {
+        query.$or = [
+            { jobTitle: { $regex: req.query.search, $options: 'i' } },
+            { companyName: { $regex: req.query.search, $options: 'i' } }
+        ]
+    }
+
+    if (req.query.jobType) {
+        query.jobType = req.query.jobType
+    }
+    if (req.query.jobCategory) {
+        query.jobCategory = req.query.jobCategory
+    }
+    if (req.query.isRemote) {
+        query.isRemote = req.query.isRemote
+    }
+
+
+
+    // company related query
+    if (req.query.companyId) {
+        query.companyId = req.query.companyId;
+    }
+    if (req.query.status) {
+        query.status = req.query.status;
+    }
+
+    // pagination related work
+    if (req.query.page) {
+        const page = req.query.page;
+        const perPage = req.query.perPage || 12;
+        const skipItems = (page - 1) * perPage
+
+        const total = await jobCollection.countDocuments(query);
+        const cursor = jobCollection.find(query).skip(skipItems).limit(perPage);
+        const jobs = await cursor.toArray();
+        return res.send({ total, jobs });
+    }
+
+    const cursor = jobCollection.find(query);
+    const result = await cursor.toArray();
+    res.send(result);
+})
 
         app.get('/api/jobs/:id', async (req, res) => {
             const id = req.params.id;
