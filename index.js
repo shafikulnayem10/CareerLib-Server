@@ -113,6 +113,8 @@ async function run() {
         //     const result = await cursor.toArray();
         //     res.send(result);
         // })
+
+        
      //jobs related apis
         app.get('/api/jobs', async (req, res) => {
     console.log('server side q', req.query)
@@ -345,7 +347,7 @@ app.patch('/api/companies/:id', logger, verifyToken, verifyAdmin, async (req, re
 
 
         // Verify the database connection 
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     } catch (error) {
